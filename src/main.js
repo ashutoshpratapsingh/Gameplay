@@ -189,16 +189,35 @@ class Venom3DApp {
   }
 
   bindInputs() {
+    // Robust touch & click helper for 0ms delay mobile responsiveness
+    const bindButton = (el, fn) => {
+      if (!el) return;
+      let lastTrigger = 0;
+      const onTrigger = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        const now = performance.now();
+        if (now - lastTrigger < 200) return; // Debounce dual touchstart/pointerdown
+        lastTrigger = now;
+        venomAudio.ensureContext();
+        fn();
+      };
+      el.addEventListener("touchstart", onTrigger, { passive: false });
+      el.addEventListener("pointerdown", onTrigger);
+      el.addEventListener("click", onTrigger);
+    };
+
     // Tutorial Help Button (Re-run tutorial anytime)
-    this.btnHelp.addEventListener("click", () => {
+    bindButton(this.btnHelp, () => {
       this.restartGame();
       this.tutorialActive = true;
       this.setTutorialStep(TUTORIAL_STEPS.MOVE);
     });
 
     // Skip Tutorial Button
-    this.btnSkipTutorial.addEventListener("click", (e) => {
-      e.stopPropagation();
+    bindButton(this.btnSkipTutorial, () => {
       this.tutorialActive = false;
       this.tutorialOverlay.classList.add("hidden");
       localStorage.setItem("venom_tutorial_completed", "true");
@@ -206,52 +225,52 @@ class Venom3DApp {
     });
 
     // Sound Toggle
-    this.btnMute.addEventListener("click", () => {
+    bindButton(this.btnMute, () => {
       const isMuted = venomAudio.toggleMute();
       this.btnMute.textContent = isMuted ? "🔇" : "🔊";
     });
 
     // Reset Level
-    this.btnReset.addEventListener("click", () => {
-      venomAudio.ensureContext();
-      this.restartGame();
-    });
-    this.btnRetry.addEventListener("click", () => {
-      venomAudio.ensureContext();
+    bindButton(this.btnReset, () => this.restartGame());
+
+    // Retry Button (Game Over Modal)
+    bindButton(this.btnRetry, () => {
       this.gameOverModal.classList.remove("active");
       this.restartGame();
     });
 
     // Morph Button
-    this.btnMorph.addEventListener("pointerdown", (e) => {
-      e.stopPropagation();
-      venomAudio.ensureContext();
+    bindButton(this.btnMorph, () => {
+      if (this.engine.isUnderFire() && !this.engine.player.isDisguised) {
+        venomAudio.playCamouflageDenied();
+        this.renderer.triggerScreenShake(0.4);
+        this.showToast("⚠️ UNDER FIRE! TAP [DASH] TO ESCAPE FIRST!");
+        this.btnMorph.classList.add("denied");
+        setTimeout(() => this.btnMorph.classList.remove("denied"), 450);
+        return;
+      }
       this.engine.toggleDisguise();
     });
 
     // Dash Button
-    if (this.btnDash) {
-      this.btnDash.addEventListener("pointerdown", (e) => {
-        e.stopPropagation();
-        venomAudio.ensureContext();
-        this.engine.triggerDash();
-      });
-    }
+    bindButton(this.btnDash, () => {
+      const dashed = this.engine.triggerDash();
+      if (!dashed && this.engine.dashCooldownTimer > 0) {
+        this.showToast("💨 DASH RECHARGING...");
+      }
+    });
 
     // Decoy Lure Button
-    if (this.btnDecoy) {
-      this.btnDecoy.addEventListener("pointerdown", (e) => {
-        e.stopPropagation();
-        venomAudio.ensureContext();
-        this.engine.triggerDecoyNoise();
-      });
-    }
+    bindButton(this.btnDecoy, () => {
+      this.engine.triggerDecoyNoise();
+    });
 
     // Devour Button
-    this.btnDevour.addEventListener("pointerdown", (e) => {
-      e.stopPropagation();
-      venomAudio.ensureContext();
-      this.engine.triggerDevour();
+    bindButton(this.btnDevour, () => {
+      const devoured = this.engine.triggerDevour();
+      if (!devoured && !this.engine.isGameOver) {
+        this.showToast("⚡ SNEAK CLOSER BEHIND GUARD TO DEVOUR!");
+      }
     });
 
     // Keyboard Listeners
@@ -285,6 +304,19 @@ class Venom3DApp {
     const stage = document.getElementById("viewport-stage");
     let touchStartX = 0;
     let touchStartY = 0;
+
+    const isUIElement = (target) => {
+      return !!(target && (
+        target.closest("button") ||
+        target.closest(".action-dock") ||
+        target.closest(".action-btn") ||
+        target.closest("#game-header") ||
+        target.closest(".modal-overlay") ||
+        target.closest(".modal-box") ||
+        target.closest(".tutorial-card") ||
+        target.closest(".tutorial-skip-btn")
+      ));
+    };
 
     const handlePointerDown = (clientX, clientY) => {
       venomAudio.ensureContext();
@@ -325,8 +357,9 @@ class Venom3DApp {
       this.joystickRing.classList.add("hidden");
     };
 
-    // Touch Events
+    // Touch Events (Ignore if tapping any button or header)
     stage.addEventListener("touchstart", (e) => {
+      if (isUIElement(e.target)) return;
       if (e.touches.length > 0) {
         handlePointerDown(e.touches[0].clientX, e.touches[0].clientY);
       }
@@ -343,7 +376,7 @@ class Venom3DApp {
 
     // Mouse Drag Alternative (for desktop browser testing)
     stage.addEventListener("mousedown", (e) => {
-      if (e.button === 0) handlePointerDown(e.clientX, e.clientY);
+      if (e.button === 0 && !isUIElement(e.target)) handlePointerDown(e.clientX, e.clientY);
     });
 
     window.addEventListener("mousemove", (e) => {

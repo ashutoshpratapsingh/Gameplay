@@ -323,7 +323,15 @@ html, body {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
   transition: transform 0.1s ease, filter 0.15s ease;
   pointer-events: auto;
-  touch-action: manipulation;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.action-btn * {
+  pointer-events: none;
 }
 
 .action-btn:active {
@@ -393,7 +401,7 @@ html, body {
 .devour-btn.disabled {
   opacity: 0.35;
   filter: grayscale(0.8);
-  pointer-events: none;
+  pointer-events: auto;
   animation: none;
 }
 
