@@ -155,22 +155,34 @@ export class Venom3DEngine {
       });
     }
 
-    const propCount = chunkIdx === 0 ? 1 : (2 + Math.floor(Math.random() * 3));
+    // Tactical Safe Ambush Nooks (strictly outside all outer and zig-zag walls)
+    const candidateNooks = [
+      { x: -6.2, z: zCenter + 10.2 }, // Tucked behind Left Barrier
+      { x: 6.2, z: zCenter - 10.2 },  // Tucked behind Right Barrier
+      { x: 6.8, z: zCenter + 7.0 },   // Open alcove opposite Left Barrier
+      { x: -6.8, z: zCenter - 7.0 },  // Open alcove opposite Right Barrier
+      { x: Math.random() > 0.5 ? 5.8 : -5.8, z: zCenter } // Central room recess
+    ];
+    candidateNooks.sort(() => Math.random() - 0.5);
 
-    for (let p = 0; p < propCount; p++) {
-      const typeKey = propTypes[Math.floor(Math.random() * propTypes.length)];
-      // Position props along corridor sides & alcoves
-      const px = (Math.random() > 0.5 ? 1 : -1) * (4.0 + Math.random() * 3.5);
-      const pz = this.nextChunkZ - 4.0 - Math.random() * (this.chunkLength - 8.0);
+    const propCount = chunkIdx === 0 ? 0 : (2 + Math.floor(Math.random() * 2));
+    let placed = 0;
 
-      this.props.push({
-        id: `prop_${this.props.length}`,
-        type: typeKey,
-        def: PROP_TYPES[typeKey],
-        x: px,
-        z: pz,
-        chunkId
-      });
+    for (const nook of candidateNooks) {
+      if (placed >= propCount) break;
+      // Strict collision clearance check guarantees 0% clipping into any wall
+      if (!this.isPositionInsideAnyWall(nook.x, nook.z, 1.8)) {
+        const typeKey = propTypes[Math.floor(Math.random() * propTypes.length)];
+        this.props.push({
+          id: `prop_${chunkId}_${placed}_${Date.now()}`,
+          type: typeKey,
+          def: PROP_TYPES[typeKey],
+          x: nook.x,
+          z: nook.z,
+          chunkId
+        });
+        placed++;
+      }
     }
 
     // --- ESCALATING BODYGUARD GENERATOR ---
@@ -367,11 +379,12 @@ export class Venom3DEngine {
     if (!closestProp) {
       const mimicTypes = ["CRATE", "BARREL"];
       const chosenType = mimicTypes[Math.floor(Math.random() * mimicTypes.length)];
+      const clampedX = Math.max(-7.2, Math.min(7.2, p.x));
       closestProp = {
         id: `mimic_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
         type: chosenType,
         def: PROP_TYPES[chosenType],
-        x: p.x,
+        x: clampedX,
         z: p.z,
         isMimic: true,
         chunkId: `chunk_${Math.floor(Math.abs(p.z) / this.chunkLength)}`
@@ -744,6 +757,25 @@ export class Venom3DEngine {
     });
 
     if (this.onAK47Shot) this.onAK47Shot();
+  }
+
+  isPositionInsideAnyWall(x, z, clearance = 1.8) {
+    // 1. Outer corridor wall clearance (boundary at x = +/-9.0)
+    const maxOuterX = this.corridorWidth / 2 - clearance;
+    if (Math.abs(x) > maxOuterX) return true;
+
+    // 2. Zig-Zag partition barrier clearance
+    for (const chunk of this.facilityChunks) {
+      if (!chunk.barriers) continue;
+      for (const b of chunk.barriers) {
+        const halfW = b.width / 2 + clearance;
+        const halfD = b.depth / 2 + clearance;
+        if (Math.abs(x - b.x) < halfW && Math.abs(z - b.z) < halfD) {
+          return true; // Inside or touching partition wall!
+        }
+      }
+    }
+    return false;
   }
 
   normalizeAngle(a) {
