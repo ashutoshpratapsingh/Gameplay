@@ -51,13 +51,21 @@ export class Venom3DEngine {
     this.guards = [];
     this.bullets = [];
 
-    // 3. Stats & Score
+    // 3. Stats, Combos & Abilities
     this.depth = 0; // In meters
     this.guardsDevoured = 0;
     this.score = 0;
     this.devourTarget = null;
     this.timeSlow = 1.0;
     this.isGameOver = false;
+
+    // Novel Combat & Stealth Mechanics
+    this.combatCooloffTimer = 0; // Time since last taking fire
+    this.dashTimer = 0;
+    this.dashCooldownTimer = 0;
+    this.decoyCooldownTimer = 0;
+    this.comboCount = 0;
+    this.comboTimer = 0;
 
     // Callbacks
     this.onAK47Shot = null;
@@ -67,6 +75,9 @@ export class Venom3DEngine {
     this.onGuardSpotted = null;
     this.onEvolution = null;
     this.onGameOver = null;
+    this.onDash = null;
+    this.onDecoy = null;
+    this.onCamouflageDenied = null;
 
     // Generate Initial 4 Chunks
     for (let i = 0; i < 4; i++) {
@@ -238,6 +249,17 @@ export class Venom3DEngine {
     this.guards = this.guards.filter(g => g.z < cullZ && g.state !== "DEAD");
   }
 
+  // Check if Venom is actively under fire by bodyguards
+  isUnderFire() {
+    if (this.combatCooloffTimer > 0) return true;
+    for (const g of this.guards) {
+      if (g.state === "ALERT_COMBAT" && this.canGuardSeePlayer(g)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // --- PROP METAMORPHOSIS (CAMOUFLAGE) ---
   toggleDisguise() {
     if (this.isGameOver) return false;
@@ -248,6 +270,13 @@ export class Venom3DEngine {
       p.disguisedProp = null;
       if (this.onMorph) this.onMorph(false);
       return true;
+    }
+
+    // RULE: Venom CANNOT disguise while guards are actively shooting at him!
+    // Player must escape from the shooting spot / break line of sight!
+    if (this.isUnderFire()) {
+      if (this.onCamouflageDenied) this.onCamouflageDenied("UNDER_FIRE");
+      return false;
     }
 
     // Find nearest prop within interaction range (3.8 units)
@@ -276,6 +305,66 @@ export class Venom3DEngine {
     return false;
   }
 
+  // --- UNIQUE MECHANIC: SHADOW TENDRIL DASH (ESCAPE BURST) ---
+  triggerDash() {
+    if (this.isGameOver || this.dashCooldownTimer > 0) return false;
+
+    this.dashTimer = 0.28;
+    this.dashCooldownTimer = 1.6; // 1.6s cooldown
+    this.player.invulnerableTimer = 0.35; // Brief bullet invulnerability during dash
+
+    // Dash vector based on current velocity or facing direction
+    const len = Math.hypot(this.player.vx, this.player.vz);
+    let dirX = 0;
+    let dirZ = -1;
+    if (len > 0.1) {
+      dirX = this.player.vx / len;
+      dirZ = this.player.vz / len;
+    } else {
+      dirX = Math.sin(this.player.angle);
+      dirZ = -Math.cos(this.player.angle);
+    }
+
+    const burstSpeed = this.player.speed * 2.8;
+    this.player.vx = dirX * burstSpeed;
+    this.player.vz = dirZ * burstSpeed;
+
+    if (this.onDash) this.onDash();
+    return true;
+  }
+
+  // --- UNIQUE MECHANIC: DECOY DISTRACTION RATTLE / HISS ---
+  triggerDecoyNoise() {
+    if (!this.player.isDisguised || this.decoyCooldownTimer > 0) return false;
+
+    this.decoyCooldownTimer = 2.4; // 2.4s cooldown
+
+    // Find nearest guard within distraction acoustic radius (22 units)
+    let nearestGuard = null;
+    let nearestDist = 22.0;
+
+    for (const g of this.guards) {
+      if (g.state === "DEAD") continue;
+      const dist = Math.hypot(g.x - this.player.x, g.z - this.player.z);
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearestGuard = g;
+      }
+    }
+
+    if (nearestGuard) {
+      nearestGuard.state = "SUSPICIOUS";
+      // Walk towards the sound source (the crate) to investigate
+      nearestGuard.waypoints = [
+        { x: this.player.x, z: this.player.z + (nearestGuard.z > this.player.z ? 2.5 : -2.5) }
+      ];
+      nearestGuard.currentWpIdx = 0;
+    }
+
+    if (this.onDecoy) this.onDecoy(nearestGuard);
+    return true;
+  }
+
   // --- AMBUSH & DEVOUR EXECUTION ---
   triggerDevour() {
     if (!this.devourTarget || this.isGameOver) return false;
@@ -284,9 +373,18 @@ export class Venom3DEngine {
     guard.state = "DEAD";
     this.devourTarget = null;
 
-    // Slow-motion bullet-time
-    this.timeSlow = 0.22;
-    setTimeout(() => { this.timeSlow = 1.0; }, 420);
+    // Chain Devour Combo Counter
+    if (this.comboTimer > 0) {
+      this.comboCount += 1;
+    } else {
+      this.comboCount = 1;
+    }
+    this.comboTimer = 3.6; // 3.6s window to chain next kill
+
+    // Bullet-time slow-mo scales with combo
+    const slowDuration = Math.min(650, 400 + this.comboCount * 60);
+    this.timeSlow = 0.2;
+    setTimeout(() => { this.timeSlow = 1.0; }, slowDuration);
 
     // Un-disguise with tentacle strike
     this.player.isDisguised = false;
@@ -296,11 +394,13 @@ export class Venom3DEngine {
     this.player.x = guard.x;
     this.player.z = guard.z;
 
-    // Biomass Absorption & Health Regen
-    this.player.biomass += 40;
+    // Biomass Absorption & Health Regen (amplified by combos!)
+    const comboBonus = 1 + (this.comboCount - 1) * 0.5;
+    const gainedBiomass = Math.round(40 * comboBonus);
+    this.player.biomass += gainedBiomass;
     this.player.health = Math.min(this.player.maxHealth, this.player.health + 35);
     this.guardsDevoured += 1;
-    this.score += 500 * this.player.tier;
+    this.score += Math.round(500 * this.player.tier * comboBonus);
 
     // Check Evolution Tier
     const prevTier = this.player.tier;
@@ -318,7 +418,7 @@ export class Venom3DEngine {
       if (this.onEvolution) this.onEvolution(2);
     }
 
-    if (this.onDevour) this.onDevour(guard, this.player);
+    if (this.onDevour) this.onDevour(guard, this.player, this.comboCount, gainedBiomass);
     return true;
   }
 
@@ -327,6 +427,17 @@ export class Venom3DEngine {
     if (this.isGameOver) return;
     const actualDelta = delta * this.timeSlow;
     const p = this.player;
+
+    // Update Ability & Combat Timers
+    if (this.combatCooloffTimer > 0) this.combatCooloffTimer -= actualDelta;
+    if (this.dashTimer > 0) this.dashTimer -= actualDelta;
+    if (this.dashCooldownTimer > 0) this.dashCooldownTimer -= actualDelta;
+    if (this.decoyCooldownTimer > 0) this.decoyCooldownTimer -= actualDelta;
+    if (this.comboTimer > 0) {
+      this.comboTimer -= actualDelta;
+      if (this.comboTimer <= 0) this.comboCount = 0;
+    }
+    if (p.invulnerableTimer > 0) p.invulnerableTimer -= actualDelta;
 
     // Check Devour Target Availability
     this.updateDevourTarget();
@@ -347,11 +458,14 @@ export class Venom3DEngine {
       // Check hit Venom
       const distToPlayer = Math.hypot(bullet.x - p.x, bullet.z - p.z);
       if (distToPlayer < p.radius + 0.4) {
-        p.health -= 14;
-        if (p.health <= 0) {
-          p.health = 0;
-          this.isGameOver = true;
-          if (this.onGameOver) this.onGameOver();
+        if (p.invulnerableTimer <= 0) {
+          p.health -= 14;
+          this.combatCooloffTimer = 2.4; // Keeps player under fire!
+          if (p.health <= 0) {
+            p.health = 0;
+            this.isGameOver = true;
+            if (this.onGameOver) this.onGameOver();
+          }
         }
         this.bullets.splice(b, 1);
         continue;
@@ -463,6 +577,7 @@ export class Venom3DEngine {
   }
 
   fireAK47(guard) {
+    this.combatCooloffTimer = 2.4; // Marks player actively under fire!
     const bulletSpeed = 42.0;
     const spread = (Math.random() - 0.5) * 0.12;
     const angle = guard.angle + spread;

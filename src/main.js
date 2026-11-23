@@ -65,6 +65,9 @@ class Venom3DApp {
 
     this.btnMorph = document.getElementById("btn-morph");
     this.btnDevour = document.getElementById("btn-devour");
+    this.btnDash = document.getElementById("btn-dash");
+    this.btnDecoy = document.getElementById("btn-decoy");
+    this.morphText = document.getElementById("morph-text");
 
     // Virtual Joystick Elements
     this.joystickRing = document.getElementById("virtual-joystick");
@@ -115,11 +118,16 @@ class Venom3DApp {
       this.updateHUD();
     };
 
-    // 4. Devour Execution
-    this.engine.onDevour = (guard, player) => {
+    // 4. Devour Execution with Chain Combos!
+    this.engine.onDevour = (guard, player, comboCount, gainedBiomass) => {
       venomAudio.playDevourExecution();
-      this.renderer.triggerScreenShake(1.4);
-      this.showToast("🩸 GUARD CONSUMED! +40 BIOMASS");
+      this.renderer.triggerScreenShake(comboCount > 1 ? 2.0 : 1.4);
+
+      if (comboCount > 1) {
+        this.showToast(`🔥 CHAIN COMBO x${comboCount}! +${gainedBiomass} BIOMASS!`);
+      } else {
+        this.showToast(`🩸 GUARD CONSUMED! +${gainedBiomass} BIOMASS`);
+      }
       this.updateHUD();
 
       if (this.tutorialActive && this.tutorialStep === TUTORIAL_STEPS.DEVOUR) {
@@ -127,7 +135,35 @@ class Venom3DApp {
       }
     };
 
-    // 5. Evolution
+    // 5. Camouflage Denied (Under Fire Lockout)
+    this.engine.onCamouflageDenied = (reason) => {
+      venomAudio.playCamouflageDenied();
+      this.renderer.triggerScreenShake(0.5);
+      this.showToast("⚠️ UNDER FIRE! RUN FROM SHOOTING SPOT TO DISGUISE!");
+      if (this.btnMorph) {
+        this.btnMorph.classList.add("denied");
+        setTimeout(() => this.btnMorph.classList.remove("denied"), 500);
+      }
+    };
+
+    // 6. Shadow Tendril Dash
+    this.engine.onDash = () => {
+      venomAudio.playDashWhip();
+      this.renderer.triggerScreenShake(0.6);
+      this.showToast("💨 SHADOW DASH! EVADED SHOOTING ZONE!");
+    };
+
+    // 7. Decoy Distraction Noise
+    this.engine.onDecoy = (guard) => {
+      venomAudio.playDecoyRattle();
+      if (guard) {
+        this.showToast("🔊 DECOY RATTLE! GUARD INVESTIGATING...");
+      } else {
+        this.showToast("🔊 DECOY RATTLE ECHOED...");
+      }
+    };
+
+    // 8. Evolution
     this.engine.onEvolution = (tier) => {
       if (tier === 2) {
         this.showToast("🧬 EVOLUTION: TIER 2 SYMBIOTE (RANGE x2)");
@@ -189,6 +225,24 @@ class Venom3DApp {
       this.engine.toggleDisguise();
     });
 
+    // Dash Button
+    if (this.btnDash) {
+      this.btnDash.addEventListener("pointerdown", (e) => {
+        e.stopPropagation();
+        venomAudio.ensureContext();
+        this.engine.triggerDash();
+      });
+    }
+
+    // Decoy Lure Button
+    if (this.btnDecoy) {
+      this.btnDecoy.addEventListener("pointerdown", (e) => {
+        e.stopPropagation();
+        venomAudio.ensureContext();
+        this.engine.triggerDecoyNoise();
+      });
+    }
+
     // Devour Button
     this.btnDevour.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
@@ -208,6 +262,14 @@ class Venom3DApp {
       if (e.code === "KeyE") {
         e.preventDefault();
         this.engine.triggerDevour();
+      }
+      if (e.code === "ShiftLeft" || e.code === "ShiftRight") {
+        e.preventDefault();
+        this.engine.triggerDash();
+      }
+      if (e.code === "KeyQ" || e.code === "KeyF") {
+        e.preventDefault();
+        this.engine.triggerDecoyNoise();
       }
     });
 
@@ -381,6 +443,33 @@ class Venom3DApp {
       this.btnDevour.classList.remove("disabled");
     } else {
       this.btnDevour.classList.add("disabled");
+    }
+
+    // Under Fire Camouflage Lockout
+    const isUnderFire = this.engine.isUnderFire();
+    if (this.btnMorph) {
+      if (isUnderFire && !p.isDisguised) {
+        this.btnMorph.classList.add("under-fire");
+        if (this.morphText) this.morphText.textContent = "LOCKED";
+      } else {
+        this.btnMorph.classList.remove("under-fire");
+        if (this.morphText) this.morphText.textContent = p.isDisguised ? "EMERGE" : "MORPH";
+      }
+    }
+
+    // Decoy Lure Button visibility (visible when disguised in prop)
+    if (this.btnDecoy) {
+      if (p.isDisguised) {
+        this.btnDecoy.classList.remove("hidden");
+        this.btnDecoy.style.opacity = this.engine.decoyCooldownTimer > 0 ? "0.45" : "1.0";
+      } else {
+        this.btnDecoy.classList.add("hidden");
+      }
+    }
+
+    // Dash Cooldown Indicator
+    if (this.btnDash) {
+      this.btnDash.style.opacity = this.engine.dashCooldownTimer > 0 ? "0.4" : "1.0";
     }
   }
 

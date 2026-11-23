@@ -330,11 +330,50 @@ html, body {
   transform: scale(0.92);
 }
 
+.dash-btn {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border: 2px solid #38bdf8;
+  color: #fff;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.5);
+}
+
+.decoy-btn {
+  background: linear-gradient(135deg, #d97706 0%, #92400e 100%);
+  border: 2px solid #f59e0b;
+  color: #fff;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.5);
+  animation: pulse-decoy 1.4s infinite;
+}
+
+@keyframes pulse-decoy {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.06); filter: brightness(1.2); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
 .morph-btn {
   background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
   border: 2px solid #a855f7;
   color: #fff;
   box-shadow: 0 0 16px rgba(168, 85, 247, 0.5);
+}
+
+.morph-btn.under-fire {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.8) !important;
+  filter: grayscale(0.4);
+}
+
+.morph-btn.denied {
+  animation: shake-denied 0.35s ease;
+  border-color: #ef4444 !important;
+  background: #7f1d1d !important;
+}
+
+@keyframes shake-denied {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
 }
 
 .devour-btn {
@@ -763,9 +802,21 @@ html, body {
 
       <!-- ERGONOMIC BOTTOM ONE-THUMB ACTION DOCK -->
       <div class="action-dock">
+        <button id="btn-dash" class="action-btn dash-btn" title="Shadow Tendril Dash [SHIFT]">
+          <span class="btn-icon">💨</span>
+          <span class="btn-text">DASH</span>
+          <span class="btn-key">[SHIFT]</span>
+        </button>
+
+        <button id="btn-decoy" class="action-btn decoy-btn hidden" title="Rattle Decoy to Lure Guards [Q]">
+          <span class="btn-icon">🔊</span>
+          <span class="btn-text">LURE</span>
+          <span class="btn-key">[Q]</span>
+        </button>
+
         <button id="btn-morph" class="action-btn morph-btn" title="Morph into nearby object [SPACE]">
           <span class="btn-icon">📦</span>
-          <span class="btn-text">MORPH</span>
+          <span id="morph-text" class="btn-text">MORPH</span>
           <span class="btn-key">[SPACE]</span>
         </button>
 

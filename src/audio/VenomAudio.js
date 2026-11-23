@@ -333,6 +333,101 @@ class VenomAudioEngine {
     osc.start(t);
     osc.stop(t + 0.17);
   }
+
+  // --- 7. SHADOW TENDRIL DASH WHIP ---
+  playDashWhip() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(80, t);
+    osc.frequency.exponentialRampToValueAtTime(550, t + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(90, t + 0.24);
+
+    gain.gain.setValueAtTime(0.001, t);
+    gain.gain.setValueAtTime(0.55, t + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+
+    osc.connect(gain);
+    gain.connect(this.compressor);
+    osc.start(t);
+    osc.stop(t + 0.28);
+  }
+
+  // --- 8. DECOY RATTLE / HISS (DISTRACTION) ---
+  playDecoyRattle() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    // Metallic box tap
+    [950, 1400, 2200].forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, t + idx * 0.04);
+      osc.frequency.exponentialRampToValueAtTime(200, t + idx * 0.04 + 0.08);
+
+      gain.gain.setValueAtTime(0.3, t + idx * 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.04 + 0.09);
+
+      osc.connect(gain);
+      gain.connect(this.compressor);
+      osc.start(t + idx * 0.04);
+      osc.stop(t + idx * 0.04 + 0.1);
+    });
+
+    // Wet serpent-like predator hiss
+    const bufferSize = Math.floor(this.ctx.sampleRate * 0.25);
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.sin((i / bufferSize) * Math.PI);
+    }
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(3200, t + 0.12);
+    filter.Q.setValueAtTime(2.5, t + 0.12);
+
+    const nGain = this.ctx.createGain();
+    nGain.gain.setValueAtTime(0.35, t + 0.12);
+    nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+
+    noise.connect(filter);
+    filter.connect(nGain);
+    nGain.connect(this.compressor);
+    noise.start(t + 0.12);
+  }
+
+  // --- 9. CAMOUFLAGE DENIED / UNDER FIRE WARNING BUZZ ---
+  playCamouflageDenied() {
+    if (this.muted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(140, t);
+    osc.frequency.setValueAtTime(110, t + 0.08);
+
+    gain.gain.setValueAtTime(0.4, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+    osc.connect(gain);
+    gain.connect(this.compressor);
+    osc.start(t);
+    osc.stop(t + 0.2);
+  }
 }
 
 export const venomAudio = new VenomAudioEngine();

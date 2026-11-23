@@ -17,16 +17,25 @@ Inspired by the Hollywood predator fantasy (*Venom*), **SYMBIOTE 3D** introduces
 2. **Metamorphic Prop Camouflage (The Mimic)**:
    - Slink near non-living objects (supply crates, toxic chemical barrels, server racks, vending machines) and press **`[MORPH]` / `[SPACE]`**.
    - Venom liquefies and absorbs into the object. While camouflaged, armed guards can shine flashlights directly on the prop without detecting the player.
-3. **Tactical AK-47 Bodyguard AI**:
+3. **Under-Fire Camouflage Lockout**:
+   - Venom **CANNOT** disguise into objects while bodyguards are actively shooting at him with AK-47s!
+   - Venom must sprint or dash away from the shooting hotspot, break line-of-sight behind walls/cover, and then camouflage once out of guard vision.
+4. **Shadow Tendril Dash (Tactical Evade)**:
+   - Tap **`[DASH]` / `[SHIFT]`** (or double-tap on mobile) to launch forward with a supersonic tendril whip at 2.8x speed with temporary bullet invulnerability to reach cover.
+5. **Decoy Distraction Rattle / Hiss (Lure Guards)**:
+   - While hidden inside a crate or barrel, tap **`[LURE]` / `[Q]`** to rattle the crate or emit a wet hiss. Nearby guards hear the sound, turn their backs to investigate the prop, walking directly into your ambush trap!
+6. **Chain Devour Combos**:
+   - Devour consecutive guards within 3.6 seconds to trigger combo multipliers (2x, 3x, 4x) with intense bullet-time slow-mo, massive biomass boosts, and predator frenzy effects!
+7. **Tactical AK-47 Bodyguard AI**:
    - Armed bodyguards patrol corridors with dynamic volumetric vision cones (Green = Patrol, Yellow = Suspicious, Red = Alert).
    - If guards spot Venom in living form, they open fire with realistic **AK-47 assault rifle 3-round bursts** (`RAT-TAT-TAT!`).
-4. **Behind-the-Back Ambush & Devour Execution**:
+8. **Behind-the-Back Ambush & Devour Execution**:
    - Sneak behind guards outside their vision cone or erupt from a disguised prop and trigger **`[DEVOUR]` / `[E]`**.
    - Thick black tendrils erupt, lifting and consuming the guard in slow-motion bullet-time.
-5. **Endless Procedural Facility & Guard Escalation**:
+9. **Endless Procedural Facility & Guard Escalation**:
    - The facility extends infinitely along the corridor axis.
    - The deeper Venom infiltrates (`Depth: 50m, 100m, 250m, 500m+`), the number of bodyguards escalates exponentially, creating overlapping crossfire hazards.
-6. **Biomass Evolution**:
+10. **Biomass Evolution**:
    - **Tier 1 (Parasite)**: Base form (100 HP, 2 tendrils, 5.8m Devour reach).
    - **Tier 2 (Symbiote)**: Unlocks at 80 Biomass (180 HP, 4 tendrils, 8.5m Devour reach, faster movement).
    - **Tier 3 (Apex Beast)**: Unlocks at 160 Biomass (260 HP, 6 massive tendrils, fearsome aura).
@@ -37,14 +46,18 @@ Inspired by the Hollywood predator fantasy (*Venom*), **SYMBIOTE 3D** introduces
 
 ### Mobile (One-Handed Play)
 - **Interactive First-Time Tutorial**: Animated finger (`👆`) guides first-time players through slinking, camouflaging, waiting for guards to pass, and executing behind-the-back devours.
-- **`[❓]` Tutorial Help**: Tap anytime in the header to restart the tutorial walkthrough.
 - **Touch & Drag Anywhere**: A floating virtual joystick appears under your thumb for smooth 360° locomotion.
-- **`[MORPH]` Button**: One-tap camouflage when near props.
-- **`[DEVOUR]` Button**: Glows neon crimson when an armed guard is in ambush range.
+- **Double-Tap**: Activates Shadow Tendril Dash to escape gunfire!
+- **`[DASH 💨]` Button**: One-tap burst dash.
+- **`[MORPH 📦]` Button**: One-tap camouflage when near props (locked while under fire).
+- **`[LURE 🔊]` Button**: Rattle crate / hiss to lure guards when disguised.
+- **`[DEVOUR ⚡]` Button**: Glows neon crimson when an armed guard is in ambush range.
 
 ### Desktop
 - **`WASD` / `Arrow Keys`**: Slink / Move Venom.
+- **`[SHIFT]`**: Shadow Tendril Dash.
 - **`[SPACE]`**: Morph into nearby prop / Revert form.
+- **`[Q]` / `[F]`**: Lure / Decoy noise when disguised.
 - **`[E]`**: Ambush & Devour target guard.
 
 ---
