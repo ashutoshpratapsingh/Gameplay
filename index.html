@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>SYMBIOTE 3D: Apex Predator — Endless Mobile Infiltration</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <!-- MOBILE PHONE SHELL WRAPPER -->
+  <div id="phone-container">
+
+    <!-- TOP HEADER HUD (HIGH CONTRAST & BRIGHT) -->
+    <header id="game-header">
+      <div class="header-top-row">
+        <div class="logo-group">
+          <span class="game-badge">🕷️ VENOM 3D</span>
+          <span class="sub-badge">APEX PREDATOR</span>
+        </div>
+
+        <!-- Depth & Devoured Stats -->
+        <div class="depth-badge">
+          <span class="depth-icon">📍</span>
+          <span id="depth-val" class="depth-num">0m</span>
+        </div>
+
+        <div class="header-actions">
+          <button id="btn-reset" class="mini-btn" title="Restart Infiltration">🔄</button>
+          <button id="btn-mute" class="mini-btn" title="Toggle Sound">🔊</button>
+        </div>
+      </div>
+
+      <!-- Health Bar & Biomass Tier Gauge -->
+      <div class="status-row">
+        <div class="stat-pill health-pill">
+          <span class="stat-icon">❤️</span>
+          <div class="bar-container">
+            <div class="bar-fill health-fill" id="health-bar" style="width: 100%;"></div>
+          </div>
+          <span id="health-val" class="stat-num">100</span>
+        </div>
+
+        <div class="stat-pill biomass-pill">
+          <span class="stat-icon">🧬</span>
+          <div class="bar-container">
+            <div class="bar-fill biomass-fill" id="biomass-bar" style="width: 0%;"></div>
+          </div>
+          <span id="tier-badge" class="tier-badge">TIER 1</span>
+        </div>
+      </div>
+
+      <!-- Active Camouflage Status Pill -->
+      <div class="disguise-row">
+        <div class="disguise-pill" id="disguise-pill">
+          <span class="disguise-dot" id="disguise-dot"></span>
+          <span id="disguise-status-text">SLINKING (VENOM FORM)</span>
+        </div>
+        <div class="kills-pill">
+          <span>💀 CONSUMED: </span>
+          <strong id="kills-val">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <!-- 3D VIEWPORT STAGE -->
+    <main id="viewport-stage">
+      <div id="canvas-container"></div>
+
+      <!-- Floating Action Toast -->
+      <div id="action-toast" class="action-toast hidden">
+        <span id="toast-text">💥 DEVOUR! +40 BIOMASS</span>
+      </div>
+
+      <!-- Virtual Touch Joystick (One-Handed Phone Control) -->
+      <div id="virtual-joystick" class="joystick-ring hidden">
+        <div id="joystick-knob" class="joystick-knob"></div>
+      </div>
+
+      <!-- ERGONOMIC BOTTOM ONE-THUMB ACTION DOCK -->
+      <div class="action-dock">
+        <button id="btn-morph" class="action-btn morph-btn" title="Morph into nearby object [SPACE]">
+          <span class="btn-icon">📦</span>
+          <span class="btn-text">MORPH</span>
+          <span class="btn-key">[SPACE]</span>
+        </button>
+
+        <button id="btn-devour" class="action-btn devour-btn disabled" title="Devour Guard [E]">
+          <span class="btn-icon">⚡</span>
+          <span class="btn-text">DEVOUR</span>
+          <span class="btn-key">[E]</span>
+        </button>
+      </div>
+
+      <!-- ONE-HANDED MOBILE GUIDE -->
+      <div class="drag-hint">
+        👆 <b>One-Handed Touch:</b> Drag anywhere on screen to slink • Tap <b>MORPH</b> near crates • Sneak behind guards & tap <b>DEVOUR</b>!
+      </div>
+    </main>
+
+    <!-- GAME OVER / RESTART MODAL -->
+    <div id="gameover-modal" class="modal-overlay">
+      <div class="modal-box gameover-box">
+        <div class="modal-icon">💀</div>
+        <div class="modal-title" style="color: #ef4444;">VENOM SHREDDED!</div>
+        <div class="modal-subtitle">
+          Guards opened fire with AK-47 assault rifles and destroyed your biomass!
+        </div>
+
+        <div class="final-stats">
+          <div class="stat-card">
+            <span class="card-label">DEPTH REACHED</span>
+            <span id="modal-depth" class="card-val" style="color: #38bdf8;">0m</span>
+          </div>
+          <div class="stat-card">
+            <span class="card-label">GUARDS DEVOURED</span>
+            <span id="modal-kills" class="card-val" style="color: #a855f7;">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="card-label">PEAK EVOLUTION</span>
+            <span id="modal-tier" class="card-val" style="color: #22c55e;">TIER 1</span>
+          </div>
+        </div>
+
+        <button id="btn-retry" class="modal-btn">🔄 RE-ENTER FACILITY</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
