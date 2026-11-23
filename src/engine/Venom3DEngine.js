@@ -245,16 +245,17 @@ export class Venom3DEngine {
 
     // Remove old chunks
     this.facilityChunks = this.facilityChunks.filter(c => c.z < cullZ);
-    this.props = this.props.filter(p => p.z < cullZ);
+    this.props = this.props.filter(p => p.z < cullZ || (this.player.isDisguised && this.player.disguisedProp === p));
     this.guards = this.guards.filter(g => g.z < cullZ && g.state !== "DEAD");
   }
 
   // Check if Venom is actively under fire by bodyguards
   isUnderFire() {
-    if (this.combatCooloffTimer > 0) return true;
     for (const g of this.guards) {
-      if (g.state === "ALERT_COMBAT" && this.canGuardSeePlayer(g)) {
-        return true;
+      if (g.state === "ALERT_COMBAT" && g.state !== "DEAD") {
+        if (this.canGuardSeePlayer(g)) {
+          return true;
+        }
       }
     }
     return false;
@@ -265,25 +266,31 @@ export class Venom3DEngine {
     if (this.isGameOver) return false;
     const p = this.player;
 
+    // 1. If already disguised, revert back to living Venom form
     if (p.isDisguised) {
       p.isDisguised = false;
+      if (p.disguisedProp && p.disguisedProp.isMimic) {
+        // Dissolve mimic prop back into Venom's liquid biomass
+        this.props = this.props.filter(pr => pr.id !== p.disguisedProp.id);
+      }
       p.disguisedProp = null;
       if (this.onMorph) this.onMorph(false);
       return true;
     }
 
-    // RULE: Venom CANNOT disguise while guards are actively shooting at him!
-    // Player must escape from the shooting spot / break line of sight!
+    // 2. RULE: Venom CANNOT disguise while guards are actively shooting at him!
+    // Player must escape from guard line-of-sight / dash away first!
     if (this.isUnderFire()) {
       if (this.onCamouflageDenied) this.onCamouflageDenied("UNDER_FIRE");
       return false;
     }
 
-    // Find nearest prop within interaction range (3.8 units)
+    // 3. Check for nearby pre-placed props (within 5.5m) to blend into
     let closestProp = null;
-    let closestDist = 3.8;
+    let closestDist = 5.5;
 
     for (const prop of this.props) {
+      if (prop.isMimic) continue;
       const dist = Math.hypot(prop.x - p.x, prop.z - p.z);
       if (dist < closestDist) {
         closestDist = dist;
@@ -291,18 +298,33 @@ export class Venom3DEngine {
       }
     }
 
-    if (closestProp) {
-      p.isDisguised = true;
-      p.disguisedProp = closestProp;
+    // 4. TRUE SHAPESHIFTER: If no pre-placed prop is nearby, Venom morphs on the spot!
+    // Symbiote condenses its own fluid biomass into a tactical Supply Crate or Steel Barrel disguise
+    if (!closestProp) {
+      const mimicTypes = ["CRATE", "BARREL"];
+      const chosenType = mimicTypes[Math.floor(Math.random() * mimicTypes.length)];
+      closestProp = {
+        id: `mimic_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+        type: chosenType,
+        def: PROP_TYPES[chosenType],
+        x: p.x,
+        z: p.z,
+        isMimic: true,
+        chunkId: `chunk_${Math.floor(Math.abs(p.z) / this.chunkLength)}`
+      };
+      this.props.push(closestProp);
+    } else {
+      // Snap inside existing prop
       p.x = closestProp.x;
       p.z = closestProp.z;
-      p.vx = 0;
-      p.vz = 0;
-      if (this.onMorph) this.onMorph(true, closestProp);
-      return true;
     }
 
-    return false;
+    p.isDisguised = true;
+    p.disguisedProp = closestProp;
+    p.vx = 0;
+    p.vz = 0;
+    if (this.onMorph) this.onMorph(true, closestProp);
+    return true;
   }
 
   // --- UNIQUE MECHANIC: SHADOW TENDRIL DASH (ESCAPE BURST) ---
