@@ -139,18 +139,19 @@ export class Venom3DEngine {
 
     // --- ESCALATING BODYGUARD GENERATOR ---
     let guardCount = 0;
-    if (chunkIdx === 0) guardCount = 0; // Already added tutorial guard
-    else if (chunkIdx === 1) guardCount = 1;
-    else if (chunkIdx === 2) guardCount = 2;
-    // Chunk 3-5 (100-200m): 3-4 guards
-    // Chunk 6-10 (200-350m): 4-5 guards
-    // Chunk 11+ (350m+): 6-8 guards with overlapping crossfire!
-    let guardCount = 0;
-    if (chunkIdx === 1) guardCount = 1;
-    else if (chunkIdx === 2) guardCount = 2;
-    else if (chunkIdx >= 3 && chunkIdx < 6) guardCount = 3 + Math.floor(Math.random() * 2);
-    else if (chunkIdx >= 6 && chunkIdx < 10) guardCount = 4 + Math.floor(Math.random() * 2);
-    else if (chunkIdx >= 10) guardCount = 5 + Math.min(4, Math.floor(chunkIdx / 3));
+    if (chunkIdx === 0) {
+      guardCount = 0; // Already added tutorial guard in chunk 0
+    } else if (chunkIdx === 1) {
+      guardCount = 1;
+    } else if (chunkIdx === 2) {
+      guardCount = 2;
+    } else if (chunkIdx >= 3 && chunkIdx < 6) {
+      guardCount = 3 + Math.floor(Math.random() * 2);
+    } else if (chunkIdx >= 6 && chunkIdx < 10) {
+      guardCount = 4 + Math.floor(Math.random() * 2);
+    } else if (chunkIdx >= 10) {
+      guardCount = 5 + Math.min(4, Math.floor(chunkIdx / 3));
+    }
 
     for (let g = 0; g < guardCount; g++) {
       const gz = this.nextChunkZ - 5.0 - (g + 0.5) * ((this.chunkLength - 10) / guardCount);

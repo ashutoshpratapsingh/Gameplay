@@ -16,7 +16,7 @@
 
   <link rel="stylesheet" href="./style.css">
 
-  <!-- Inlined Critical CSS so Vercel & Mobile Browsers NEVER show unstyled content -->
+  <!-- Inlined Critical CSS for instant 100% styled paint on Vercel & mobile devices -->
   <style>
 :root {
   --bg-dark: #090d16;
@@ -39,16 +39,21 @@
   touch-action: none;
 }
 
-body {
+html, body {
   background: #020617;
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   overflow: hidden;
-  height: 100vh;
+  height: 100%;
+  height: 100dvh;
+  width: 100%;
   width: 100vw;
+  margin: 0;
+  padding: 0;
   display: flex;
   justify-content: center;
   align-items: center;
+  position: fixed;
 }
 
 #phone-container {
@@ -56,7 +61,8 @@ body {
   width: 100%;
   max-width: 480px;
   height: 100%;
-  max-height: 920px;
+  height: 100dvh;
+  max-height: 100dvh;
   background: #090d16;
   display: flex;
   flex-direction: column;
@@ -66,7 +72,7 @@ body {
 
 @media (max-width: 500px) {
   #phone-container {
-    max-height: 100%;
+    max-height: 100dvh;
     border-radius: 0;
     box-shadow: none;
   }
@@ -78,11 +84,11 @@ body {
   left: 0;
   width: 100%;
   z-index: 50;
-  padding: 10px 14px;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.75) 75%, transparent 100%);
+  padding: max(8px, env(safe-area-inset-top, 8px)) 12px 8px 12px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 23, 42, 0.8) 85%, transparent 100%);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -100,7 +106,7 @@ body {
 }
 
 .game-badge {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 900;
   letter-spacing: 0.5px;
   color: #ffffff;
@@ -108,7 +114,7 @@ body {
 }
 
 .sub-badge {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   color: var(--cyan);
   letter-spacing: 1.2px;
@@ -117,22 +123,22 @@ body {
 .depth-badge {
   background: rgba(6, 182, 212, 0.15);
   border: 1px solid rgba(6, 182, 212, 0.4);
-  padding: 4px 10px;
-  border-radius: 20px;
+  padding: 3px 8px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
 .depth-num {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   color: #38bdf8;
 }
 
 .header-actions {
   display: flex;
-  gap: 6px;
+  gap: 5px;
 }
 
 .mini-btn {
@@ -140,14 +146,15 @@ body {
   border: 1px solid #475569;
   color: #fff;
   border-radius: 8px;
-  padding: 5px 8px;
-  font-size: 12px;
+  padding: 4px 7px;
+  font-size: 11px;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .status-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .stat-pill {
@@ -156,18 +163,18 @@ body {
   align-items: center;
   background: rgba(30, 41, 59, 0.75);
   border: 1px solid rgba(71, 85, 105, 0.6);
-  border-radius: 14px;
-  padding: 3px 8px;
-  gap: 6px;
+  border-radius: 12px;
+  padding: 3px 6px;
+  gap: 5px;
 }
 
 .stat-icon {
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .bar-container {
   flex: 1;
-  height: 8px;
+  height: 7px;
   background: rgba(15, 23, 42, 0.8);
   border-radius: 4px;
   overflow: hidden;
@@ -189,7 +196,7 @@ body {
 }
 
 .stat-num, .tier-badge {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
 }
 
@@ -206,12 +213,12 @@ body {
 .disguise-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: rgba(30, 41, 59, 0.7);
   border: 1px solid rgba(168, 85, 247, 0.4);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 9.5px;
   font-weight: 700;
   color: #e2e8f0;
 }
@@ -224,8 +231,8 @@ body {
 }
 
 .disguise-dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: #22c55e;
 }
@@ -236,7 +243,7 @@ body {
 }
 
 .kills-pill {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: #cbd5e1;
 }
@@ -266,8 +273,8 @@ body {
 
 .joystick-ring {
   position: absolute;
-  width: 90px;
-  height: 90px;
+  width: 85px;
+  height: 85px;
   border-radius: 50%;
   border: 2px solid rgba(56, 189, 248, 0.6);
   background: rgba(15, 23, 42, 0.45);
@@ -281,8 +288,8 @@ body {
 }
 
 .joystick-knob {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: radial-gradient(circle, #38bdf8 0%, #0284c7 100%);
   box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
@@ -292,13 +299,15 @@ body {
   display: none;
 }
 
+/* ERGONOMIC ONE-THUMB ACTION DOCK - ALWAYS ON TOP & FULLY VISIBLE */
 .action-dock {
   position: absolute;
-  bottom: 42px;
-  right: 14px;
+  bottom: max(16px, calc(env(safe-area-inset-bottom, 10px) + 8px));
+  right: 12px;
   display: flex;
-  gap: 12px;
-  z-index: 45;
+  gap: 10px;
+  z-index: 75;
+  pointer-events: auto;
 }
 
 .action-btn {
@@ -306,13 +315,15 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 72px;
-  height: 72px;
+  width: 62px;
+  height: 62px;
   border-radius: 50%;
   border: none;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
   transition: transform 0.1s ease, filter 0.15s ease;
+  pointer-events: auto;
+  touch-action: manipulation;
 }
 
 .action-btn:active {
@@ -348,31 +359,45 @@ body {
 }
 
 .btn-icon {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .btn-text {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 900;
   letter-spacing: 0.5px;
 }
 
 .btn-key {
-  font-size: 8px;
+  font-size: 7.5px;
   opacity: 0.7;
 }
 
+@media (max-width: 380px) {
+  .action-btn {
+    width: 55px;
+    height: 55px;
+  }
+  .btn-icon {
+    font-size: 16px;
+  }
+  .btn-text {
+    font-size: 8.5px;
+  }
+}
+
+/* Action Toast */
 .action-toast {
   position: absolute;
-  top: 130px;
+  top: max(110px, calc(env(safe-area-inset-top, 10px) + 90px));
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(15, 23, 42, 0.92);
   border: 1px solid var(--purple);
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 6px 14px;
+  border-radius: 18px;
   color: #fff;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
   pointer-events: none;
@@ -384,24 +409,25 @@ body {
   opacity: 0;
 }
 
+/* Left-side Drag Hint - Never overlaps bottom right buttons */
 .drag-hint {
   position: absolute;
-  bottom: 8px;
-  left: 0;
-  width: 100%;
-  text-align: center;
-  font-size: 10.5px;
+  bottom: max(12px, env(safe-area-inset-bottom, 8px));
+  left: 12px;
+  max-width: 52%;
+  text-align: left;
+  font-size: 9.5px;
   color: #94a3b8;
-  padding: 0 12px;
   pointer-events: none;
   z-index: 30;
+  line-height: 1.35;
 }
 
-/* Modals are completely hidden by default */
+/* Modals */
 .modal-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.88);
   backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
@@ -421,69 +447,74 @@ body {
   background: #0f172a;
   border: 1px solid #334155;
   border-radius: 18px;
-  padding: 24px 20px;
+  padding: 22px 18px;
   width: 86%;
-  max-width: 380px;
+  max-width: 360px;
   text-align: center;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.9);
 }
 
 .modal-icon {
-  font-size: 44px;
-  margin-bottom: 8px;
-}
-
-.modal-title {
-  font-size: 20px;
-  font-weight: 900;
+  font-size: 40px;
   margin-bottom: 6px;
 }
 
+.modal-title {
+  font-size: 19px;
+  font-weight: 900;
+  margin-bottom: 5px;
+}
+
 .modal-subtitle {
-  font-size: 12px;
+  font-size: 11.5px;
   color: #94a3b8;
-  margin-bottom: 18px;
-  line-height: 1.5;
+  margin-bottom: 16px;
+  line-height: 1.45;
 }
 
 .final-stats {
   display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 6px;
+  margin-bottom: 18px;
 }
 
 .stat-card {
   flex: 1;
   background: #1e293b;
-  border-radius: 10px;
-  padding: 10px 6px;
+  border-radius: 8px;
+  padding: 8px 4px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .card-label {
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 700;
   color: #64748b;
 }
 
 .card-val {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
 }
 
 .modal-btn {
   width: 100%;
-  padding: 13px;
+  padding: 12px;
   border-radius: 12px;
   border: none;
   background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: #fff;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 900;
   cursor: pointer;
+  touch-action: manipulation;
 }
+
+/* ===================================================
+   INTERACTIVE TUTORIAL - NON-BLOCKING OVERLAY
+   =================================================== */
 
 .tutorial-overlay {
   position: absolute;
@@ -496,69 +527,58 @@ body {
 .tutorial-overlay.hidden {
   opacity: 0;
   pointer-events: none;
+  display: none;
 }
 
 .tutorial-skip-btn {
   position: absolute;
-  top: 105px;
-  right: 14px;
+  top: max(85px, calc(env(safe-area-inset-top, 8px) + 75px));
+  right: 12px;
   pointer-events: auto;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.9);
   border: 1px solid #475569;
   color: #94a3b8;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 800;
-  padding: 4px 10px;
+  padding: 4px 9px;
   border-radius: 14px;
   cursor: pointer;
   letter-spacing: 0.5px;
   backdrop-filter: blur(4px);
-  transition: all 0.2s ease;
-}
-
-.tutorial-skip-btn:hover {
-  color: #f8fafc;
-  border-color: var(--cyan);
+  touch-action: manipulation;
 }
 
 .tutorial-card {
   position: absolute;
-  top: 135px;
+  top: max(115px, calc(env(safe-area-inset-top, 8px) + 105px));
   left: 50%;
   transform: translateX(-50%);
   width: 88%;
-  max-width: 400px;
-  background: rgba(15, 23, 42, 0.94);
+  max-width: 380px;
+  background: rgba(15, 23, 42, 0.95);
   border: 1.5px solid var(--cyan);
-  border-radius: 14px;
-  padding: 12px 16px;
+  border-radius: 12px;
+  padding: 10px 14px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(6, 182, 212, 0.35);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   text-align: center;
   backdrop-filter: blur(8px);
-  animation: pulse-card-border 2s infinite ease-in-out;
-}
-
-@keyframes pulse-card-border {
-  0% { border-color: rgba(6, 182, 212, 0.5); box-shadow: 0 0 12px rgba(6, 182, 212, 0.3); }
-  50% { border-color: rgba(6, 182, 212, 1.0); box-shadow: 0 0 22px rgba(6, 182, 212, 0.6); }
-  100% { border-color: rgba(6, 182, 212, 0.5); box-shadow: 0 0 12px rgba(6, 182, 212, 0.3); }
 }
 
 .tutorial-badge {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 900;
   letter-spacing: 1px;
   color: var(--cyan);
 }
 
 .tutorial-step-text {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   color: #f8fafc;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .tutorial-finger {
@@ -569,11 +589,11 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: top 0.4s ease, left 0.4s ease, right 0.4s ease, bottom 0.4s ease;
 }
 
 .finger-icon {
-  font-size: 42px;
+  font-size: 38px;
   filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.8));
 }
 
@@ -581,8 +601,8 @@ body {
   position: absolute;
   top: 4px;
   left: 4px;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: 2px solid var(--cyan);
   animation: ripple-wave 1.2s infinite ease-out;
@@ -595,48 +615,33 @@ body {
 
 .tutorial-finger.finger-drag {
   left: 50%;
-  top: 65%;
+  top: 60%;
   transform: translateX(-50%);
   animation: finger-swipe-up 1.6s infinite ease-in-out;
 }
 
 @keyframes finger-swipe-up {
-  0% {
-    top: 68%;
-    opacity: 0;
-    transform: translateX(-50%) scale(0.85);
-  }
-  20% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
-  }
-  75% {
-    top: 50%;
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
-  }
-  100% {
-    top: 46%;
-    opacity: 0;
-    transform: translateX(-50%) scale(0.9);
-  }
+  0% { top: 64%; opacity: 0; transform: translateX(-50%) scale(0.85); }
+  20% { opacity: 1; transform: translateX(-50%) scale(1); }
+  75% { top: 48%; opacity: 1; transform: translateX(-50%) scale(1); }
+  100% { top: 44%; opacity: 0; transform: translateX(-50%) scale(0.9); }
 }
 
 .tutorial-finger.finger-point-morph {
-  right: 68px;
-  bottom: 85px;
+  right: 76px;
+  bottom: max(80px, calc(env(safe-area-inset-bottom, 10px) + 74px));
   animation: finger-tap-morph 1.0s infinite ease-in-out;
 }
 
 @keyframes finger-tap-morph {
   0% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(12px) scale(0.88); }
+  50% { transform: translateY(10px) scale(0.88); }
   100% { transform: translateY(0) scale(1); }
 }
 
 .tutorial-finger.finger-wait {
   left: 50%;
-  top: 52%;
+  top: 50%;
   transform: translateX(-50%);
   animation: finger-pulse-wait 1.5s infinite ease-in-out;
 }
@@ -648,8 +653,8 @@ body {
 }
 
 .tutorial-finger.finger-point-devour {
-  right: 18px;
-  bottom: 85px;
+  right: 14px;
+  bottom: max(80px, calc(env(safe-area-inset-bottom, 10px) + 74px));
   animation: finger-tap-devour 0.8s infinite ease-in-out;
 }
 
@@ -659,7 +664,7 @@ body {
 
 @keyframes finger-tap-devour {
   0% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(14px) scale(0.85); }
+  50% { transform: translateY(12px) scale(0.85); }
   100% { transform: translateY(0) scale(1); }
 }
   </style>
@@ -773,7 +778,7 @@ body {
 
       <!-- ONE-HANDED MOBILE GUIDE -->
       <div class="drag-hint">
-        👆 <b>One-Handed Touch:</b> Drag anywhere on screen to slink • Tap <b>MORPH</b> near crates • Sneak behind guards & tap <b>DEVOUR</b>!
+        👆 <b>Touch:</b> Drag to slink • Tap <b>MORPH</b> near crates • Sneak behind guards & tap <b>DEVOUR</b>!
       </div>
     </main>
 
