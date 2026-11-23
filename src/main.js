@@ -1,12 +1,21 @@
 /**
  * SYMBIOTE 3D: APEX PREDATOR (VENOM PROTOCOL)
  * Main Application Controller
- * Handles 3D Loop, Procedural Infinite Facility, AK-47 Audio, and One-Handed Mobile Touch Controls.
+ * Handles 3D Loop, Procedural Infinite Facility, AK-47 Audio, One-Handed Mobile Touch Controls,
+ * and First-Time User Interactive Animated Finger Tutorial.
  */
 
 import { Venom3DEngine } from "./engine/Venom3DEngine.js";
 import { Venom3DRenderer } from "./render/Venom3DRenderer.js";
 import { venomAudio } from "./audio/VenomAudio.js";
+
+const TUTORIAL_STEPS = {
+  MOVE: 1,
+  MORPH: 2,
+  WAIT: 3,
+  DEVOUR: 4,
+  COMPLETED: 5
+};
 
 class Venom3DApp {
   constructor() {
@@ -19,9 +28,16 @@ class Venom3DApp {
     this.lastTime = performance.now();
     this.heartbeatTimer = 0;
 
+    // Tutorial State
+    const hasCompletedTutorial = localStorage.getItem("venom_tutorial_completed") === "true";
+    this.tutorialActive = !hasCompletedTutorial;
+    this.tutorialStep = TUTORIAL_STEPS.MOVE;
+
     this.initDOM();
     this.bindEngineCallbacks();
     this.bindInputs();
+
+    this.updateTutorialDisplay();
 
     // 60FPS Game Loop
     this.loop = this.loop.bind(this);
@@ -43,6 +59,7 @@ class Venom3DApp {
     this.actionToast = document.getElementById("action-toast");
     this.toastText = document.getElementById("toast-text");
 
+    this.btnHelp = document.getElementById("btn-help");
     this.btnReset = document.getElementById("btn-reset");
     this.btnMute = document.getElementById("btn-mute");
 
@@ -52,6 +69,14 @@ class Venom3DApp {
     // Virtual Joystick Elements
     this.joystickRing = document.getElementById("virtual-joystick");
     this.joystickKnob = document.getElementById("joystick-knob");
+
+    // Tutorial Elements
+    this.tutorialOverlay = document.getElementById("tutorial-overlay");
+    this.tutorialCard = document.getElementById("tutorial-card");
+    this.tutorialStepText = document.getElementById("tutorial-step-text");
+    this.tutorialStepCounter = document.getElementById("tutorial-step-counter");
+    this.tutorialFinger = document.getElementById("tutorial-finger");
+    this.btnSkipTutorial = document.getElementById("btn-skip-tutorial");
 
     // Game Over Modal
     this.gameOverModal = document.getElementById("gameover-modal");
@@ -78,8 +103,12 @@ class Venom3DApp {
     this.engine.onMorph = (isDisguised, prop) => {
       venomAudio.playMorphCamouflage(isDisguised);
       this.renderer.triggerScreenShake(0.3);
+
       if (isDisguised) {
         this.showToast(`🎭 CAMOUFLAGED: ${prop.def.name.toUpperCase()}`);
+        if (this.tutorialActive && this.tutorialStep === TUTORIAL_STEPS.MORPH) {
+          this.setTutorialStep(TUTORIAL_STEPS.WAIT);
+        }
       } else {
         this.showToast("⚡ REVERTED TO LIVING VENOM");
       }
@@ -92,6 +121,10 @@ class Venom3DApp {
       this.renderer.triggerScreenShake(1.4);
       this.showToast("🩸 GUARD CONSUMED! +40 BIOMASS");
       this.updateHUD();
+
+      if (this.tutorialActive && this.tutorialStep === TUTORIAL_STEPS.DEVOUR) {
+        this.setTutorialStep(TUTORIAL_STEPS.COMPLETED);
+      }
     };
 
     // 5. Evolution
@@ -120,6 +153,22 @@ class Venom3DApp {
   }
 
   bindInputs() {
+    // Tutorial Help Button (Re-run tutorial anytime)
+    this.btnHelp.addEventListener("click", () => {
+      this.restartGame();
+      this.tutorialActive = true;
+      this.setTutorialStep(TUTORIAL_STEPS.MOVE);
+    });
+
+    // Skip Tutorial Button
+    this.btnSkipTutorial.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.tutorialActive = false;
+      this.tutorialOverlay.classList.add("hidden");
+      localStorage.setItem("venom_tutorial_completed", "true");
+      this.showToast("🚀 TUTORIAL SKIPPED! HAVE FUN!");
+    });
+
     // Sound Toggle
     this.btnMute.addEventListener("click", () => {
       const isMuted = venomAudio.toggleMute();
@@ -238,6 +287,61 @@ class Venom3DApp {
     window.addEventListener("mouseup", () => handlePointerUp());
   }
 
+  // --- TUTORIAL STATE MACHINE ---
+  setTutorialStep(step) {
+    this.tutorialStep = step;
+    this.updateTutorialDisplay();
+  }
+
+  updateTutorialDisplay() {
+    if (!this.tutorialActive) {
+      this.tutorialOverlay.classList.add("hidden");
+      return;
+    }
+
+    this.tutorialOverlay.classList.remove("hidden");
+
+    // Remove all finger classes
+    this.tutorialFinger.className = "tutorial-finger";
+
+    switch (this.tutorialStep) {
+      case TUTORIAL_STEPS.MOVE:
+        this.tutorialStepCounter.textContent = "1/4";
+        this.tutorialStepText.innerHTML = "👆 <b>DRAG THUMB UPWARD</b> to slink Venom forward towards the supply crate!";
+        this.tutorialFinger.classList.add("finger-drag");
+        break;
+
+      case TUTORIAL_STEPS.MORPH:
+        this.tutorialStepCounter.textContent = "2/4";
+        this.tutorialStepText.innerHTML = "📦 You are near a crate! Tap <b>[MORPH]</b> to hide inside it!";
+        this.tutorialFinger.classList.add("finger-point-morph");
+        break;
+
+      case TUTORIAL_STEPS.WAIT:
+        this.tutorialStepCounter.textContent = "3/4";
+        this.tutorialStepText.innerHTML = "👀 <b>STAY HIDDEN!</b> The guard cannot see you. Wait for him to pass...";
+        this.tutorialFinger.classList.add("finger-wait");
+        break;
+
+      case TUTORIAL_STEPS.DEVOUR:
+        this.tutorialStepCounter.textContent = "4/4";
+        this.tutorialStepText.innerHTML = "⚡ <b>GUARD'S BACK IS TURNED!</b> Tap <b>[DEVOUR]</b> to consume him!";
+        this.tutorialFinger.classList.add("finger-point-devour");
+        break;
+
+      case TUTORIAL_STEPS.COMPLETED:
+        this.tutorialStepCounter.textContent = "✓";
+        this.tutorialStepText.innerHTML = "🎉 <b>TUTORIAL COMPLETE!</b> Infiltrate as deep as you can. Survive the guards!";
+        this.tutorialFinger.classList.add("hidden");
+        localStorage.setItem("venom_tutorial_completed", "true");
+        setTimeout(() => {
+          this.tutorialActive = false;
+          this.tutorialOverlay.classList.add("hidden");
+        }, 3200);
+        break;
+    }
+  }
+
   restartGame() {
     this.engine.reset();
     this.updateHUD();
@@ -313,6 +417,30 @@ class Venom3DApp {
 
     // Update 3D Engine Simulation & Guard AI
     this.engine.update(delta);
+
+    // --- CHECK TUTORIAL STEP ADVANCEMENTS IN REAL TIME ---
+    if (this.tutorialActive) {
+      const p = this.engine.player;
+
+      if (this.tutorialStep === TUTORIAL_STEPS.MOVE) {
+        // Check if player has moved close to the tutorial crate (at z = -10)
+        let nearProp = false;
+        for (const prop of this.engine.props) {
+          if (Math.hypot(prop.x - p.x, prop.z - p.z) < 4.2) {
+            nearProp = true;
+            break;
+          }
+        }
+        if (nearProp) {
+          this.setTutorialStep(TUTORIAL_STEPS.MORPH);
+        }
+      } else if (this.tutorialStep === TUTORIAL_STEPS.WAIT) {
+        // Check if devour target is ready (guard walked past and is in range)
+        if (this.engine.devourTarget) {
+          this.setTutorialStep(TUTORIAL_STEPS.DEVOUR);
+        }
+      }
+    }
 
     // Heartbeat Audio Check
     this.heartbeatTimer += delta;

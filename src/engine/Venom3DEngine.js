@@ -89,9 +89,37 @@ export class Venom3DEngine {
     };
     this.facilityChunks.push(chunk);
 
-    // Spawn 2-4 Props in this chunk
+    // Spawn Props in this chunk
     const propTypes = ["CRATE", "BARREL", "VENDING", "SERVER"];
-    const propCount = 2 + Math.floor(Math.random() * 3);
+
+    if (chunkIdx === 0) {
+      // Guaranteed Tutorial Supply Crate directly ahead of Venom
+      this.props.push({
+        id: "prop_tutorial_0",
+        type: "CRATE",
+        def: PROP_TYPES.CRATE,
+        x: 0,
+        z: -10.0,
+        chunkId
+      });
+      // Tutorial Guard patrolling at z = -20
+      this.guards.push({
+        id: "guard_tutorial_0",
+        x: -4.0,
+        z: -20.0,
+        speed: 2.6,
+        angle: 0,
+        waypoints: [{ x: -5.5, z: -20.0 }, { x: 5.5, z: -20.0 }],
+        currentWpIdx: 0,
+        state: "PATROL",
+        shootCooldown: 0,
+        fov: (72 * Math.PI) / 180,
+        viewDist: 15.0,
+        chunkId
+      });
+    }
+
+    const propCount = chunkIdx === 0 ? 1 : (2 + Math.floor(Math.random() * 3));
 
     for (let p = 0; p < propCount; p++) {
       const typeKey = propTypes[Math.floor(Math.random() * propTypes.length)];
@@ -110,10 +138,10 @@ export class Venom3DEngine {
     }
 
     // --- ESCALATING BODYGUARD GENERATOR ---
-    // Deep intrusion formula: guards increase exponentially as player moves further!
-    // Chunk 0 (0-30m): 0 guards (safe zone to practice morph)
-    // Chunk 1 (30-65m): 1 guard
-    // Chunk 2 (65-100m): 2 guards
+    let guardCount = 0;
+    if (chunkIdx === 0) guardCount = 0; // Already added tutorial guard
+    else if (chunkIdx === 1) guardCount = 1;
+    else if (chunkIdx === 2) guardCount = 2;
     // Chunk 3-5 (100-200m): 3-4 guards
     // Chunk 6-10 (200-350m): 4-5 guards
     // Chunk 11+ (350m+): 6-8 guards with overlapping crossfire!

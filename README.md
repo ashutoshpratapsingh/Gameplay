@@ -36,6 +36,8 @@ Inspired by the Hollywood predator fantasy (*Venom*), **SYMBIOTE 3D** introduces
 ## 📱 Controls
 
 ### Mobile (One-Handed Play)
+- **Interactive First-Time Tutorial**: Animated finger (`👆`) guides first-time players through slinking, camouflaging, waiting for guards to pass, and executing behind-the-back devours.
+- **`[❓]` Tutorial Help**: Tap anytime in the header to restart the tutorial walkthrough.
 - **Touch & Drag Anywhere**: A floating virtual joystick appears under your thumb for smooth 360° locomotion.
 - **`[MORPH]` Button**: One-tap camouflage when near props.
 - **`[DEVOUR]` Button**: Glows neon crimson when an armed guard is in ambush range.

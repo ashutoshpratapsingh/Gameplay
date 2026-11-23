@@ -26,6 +26,7 @@
         </div>
 
         <div class="header-actions">
+          <button id="btn-help" class="mini-btn" title="How to Play / Tutorial">❓</button>
           <button id="btn-reset" class="mini-btn" title="Restart Infiltration">🔄</button>
           <button id="btn-mute" class="mini-btn" title="Toggle Sound">🔊</button>
         </div>
@@ -70,6 +71,26 @@
       <!-- Floating Action Toast -->
       <div id="action-toast" class="action-toast hidden">
         <span id="toast-text">💥 DEVOUR! +40 BIOMASS</span>
+      </div>
+
+      <!-- INTERACTIVE FIRST-TIME USER TUTORIAL OVERLAY -->
+      <div id="tutorial-overlay" class="tutorial-overlay">
+        <!-- Skip Tutorial Button -->
+        <button id="btn-skip-tutorial" class="tutorial-skip-btn">SKIP TUTORIAL ✕</button>
+
+        <!-- Tutorial Instruction Card -->
+        <div id="tutorial-card" class="tutorial-card">
+          <div class="tutorial-badge">TUTORIAL <span id="tutorial-step-counter">1/4</span></div>
+          <div id="tutorial-step-text" class="tutorial-step-text">
+            Drag your thumb upward to slink Venom forward towards the crate!
+          </div>
+        </div>
+
+        <!-- Animated Hand / Finger Pointer -->
+        <div id="tutorial-finger" class="tutorial-finger finger-drag">
+          <div class="finger-icon">👆</div>
+          <div class="finger-ripple"></div>
+        </div>
       </div>
 
       <!-- Virtual Touch Joystick (One-Handed Phone Control) -->
