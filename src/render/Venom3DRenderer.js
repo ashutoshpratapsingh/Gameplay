@@ -445,7 +445,7 @@ export class Venom3DRenderer {
       this.tendrilChains.forEach(chain => chain.forEach(link => (link.mesh.visible = true)));
 
       this.symbioteGroup.position.set(p.x, 0, p.z);
-      this.symbioteGroup.rotation.y = p.angle;
+      this.symbioteGroup.rotation.y = Math.PI - p.angle;
 
       // Organic Slime Ripple Wobble
       const wobble = Math.sin(performance.now() * 0.008) * 0.08;
@@ -521,7 +521,7 @@ export class Venom3DRenderer {
       }
 
       meshGroup.position.set(g.x, 0, g.z);
-      meshGroup.rotation.y = g.angle;
+      meshGroup.rotation.y = Math.PI - g.angle;
 
       // Vision cone color & alert states
       if (g.state === "ALERT_COMBAT") {
@@ -643,6 +643,33 @@ export class Venom3DRenderer {
     rightWall.castShadow = true;
     group.add(rightWall);
 
+    // 3. Zig-Zag Partition Cover Walls (for stealth hiding & breaking line-of-sight)
+    if (chunk.barriers && chunk.barriers.length > 0) {
+      chunk.barriers.forEach(b => {
+        // Main Reinforced Steel Cover Wall
+        const bGeo = new THREE.BoxGeometry(b.width, 4.2, b.depth);
+        const bMesh = new THREE.Mesh(bGeo, this.matWall);
+        bMesh.position.set(b.x, 2.1, b.z);
+        bMesh.castShadow = true;
+        bMesh.receiveShadow = true;
+        group.add(bMesh);
+
+        // Top Panel Cap Trim
+        const capGeo = new THREE.BoxGeometry(b.width + 0.1, 0.25, b.depth + 0.1);
+        const capMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.6, roughness: 0.3 });
+        const capMesh = new THREE.Mesh(capGeo, capMat);
+        capMesh.position.set(b.x, 4.25, b.z);
+        group.add(capMesh);
+
+        // Glowing Cyan Hazard Edge Indicator at Corner
+        const edgeX = b.side === "LEFT" ? (b.x + b.width / 2) : (b.x - b.width / 2);
+        const edgeGeo = new THREE.BoxGeometry(0.35, 4.2, b.depth + 0.08);
+        const edgeMesh = new THREE.Mesh(edgeGeo, this.matHazard);
+        edgeMesh.position.set(edgeX, 2.1, b.z);
+        group.add(edgeMesh);
+      });
+    }
+
     // 3. Overhead Ceiling Fluorescent Panel Light (Bright illuminating fixture)
     const ceilGeo = new THREE.BoxGeometry(chunk.width * 0.4, 0.3, 1.2);
     const ceilMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
@@ -673,7 +700,7 @@ export class Venom3DRenderer {
       const bMesh = this.bulletMeshes[idx];
       bMesh.visible = true;
       bMesh.position.set(b.x, 1.5, b.z);
-      bMesh.rotation.y = Math.atan2(b.vx, b.vz);
+      bMesh.rotation.y = Math.PI - Math.atan2(b.vx, -b.vz);
     });
 
     for (let i = engine.bullets.length; i < this.bulletMeshes.length; i++) {

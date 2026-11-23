@@ -96,8 +96,33 @@ export class Venom3DEngine {
       x: 0,
       z: zCenter,
       width: this.corridorWidth,
-      length: this.chunkLength
+      length: this.chunkLength,
+      barriers: []
     };
+
+    // Add Tactical Zig-Zag Partition Cover Walls (from chunk 1 onwards)
+    if (chunkIdx >= 1) {
+      // Barrier 1: Left-side partition extending from -9 to +1, leaving 8m opening on right
+      chunk.barriers.push({
+        id: `wall_${chunkId}_left`,
+        side: "LEFT",
+        x: -4.0,
+        z: zCenter + 7.0,
+        width: 10.0,
+        depth: 1.4
+      });
+
+      // Barrier 2: Right-side partition extending from +9 to -1, leaving 8m opening on left
+      chunk.barriers.push({
+        id: `wall_${chunkId}_right`,
+        side: "RIGHT",
+        x: 4.0,
+        z: zCenter - 7.0,
+        width: 10.0,
+        depth: 1.4
+      });
+    }
+
     this.facilityChunks.push(chunk);
 
     // Spawn Props in this chunk
@@ -166,11 +191,25 @@ export class Venom3DEngine {
 
     for (let g = 0; g < guardCount; g++) {
       const gz = this.nextChunkZ - 5.0 - (g + 0.5) * ((this.chunkLength - 10) / guardCount);
-      const startX = (Math.random() - 0.5) * 10;
 
-      // Waypoints: Horizontal patrol across the corridor
-      const wpLeft = { x: -6.5, z: gz };
-      const wpRight = { x: 6.5, z: gz };
+      // Patrol through the zig-zag doorways
+      let wpLeft, wpRight;
+      if (chunk.barriers && chunk.barriers.length > 0) {
+        if (g % 2 === 0) {
+          // Patrol across the right-side opening
+          wpLeft = { x: 1.5, z: gz };
+          wpRight = { x: 7.5, z: gz };
+        } else {
+          // Patrol across the left-side opening
+          wpLeft = { x: -7.5, z: gz };
+          wpRight = { x: -1.5, z: gz };
+        }
+      } else {
+        wpLeft = { x: -6.5, z: gz };
+        wpRight = { x: 6.5, z: gz };
+      }
+
+      const startX = (wpLeft.x + wpRight.x) / 2;
 
       this.guards.push({
         id: `guard_${this.guards.length}_${Date.now()}`,
@@ -219,14 +258,39 @@ export class Venom3DEngine {
       p.vz *= 0.7;
     }
 
-    // Move player with corridor boundary collision
+    // Move player with corridor boundary and zig-zag wall collision
     const actualDelta = delta * this.timeSlow;
-    const nextX = p.x + p.vx * actualDelta;
-    const nextZ = p.z + p.vz * actualDelta;
+    let nextX = p.x + p.vx * actualDelta;
+    let nextZ = p.z + p.vz * actualDelta;
 
     const halfW = this.corridorWidth / 2 - 1.2;
-    p.x = Math.max(-halfW, Math.min(halfW, nextX));
-    p.z = nextZ; // Free movement forward/backward
+    nextX = Math.max(-halfW, Math.min(halfW, nextX));
+
+    // Collision with Zig-Zag Partition Walls (Slide along walls smoothly)
+    for (const chunk of this.facilityChunks) {
+      if (!chunk.barriers) continue;
+      for (const b of chunk.barriers) {
+        const minX = b.x - b.width / 2 - p.radius;
+        const maxX = b.x + b.width / 2 + p.radius;
+        const minZ = b.z - b.depth / 2 - p.radius;
+        const maxZ = b.z + b.depth / 2 + p.radius;
+
+        if (nextX > minX && nextX < maxX && nextZ > minZ && nextZ < maxZ) {
+          const oLeft = nextX - minX;
+          const oRight = maxX - nextX;
+          const oFront = nextZ - minZ;
+          const oBack = maxZ - nextZ;
+          const minO = Math.min(oLeft, oRight, oFront, oBack);
+          if (minO === oLeft) nextX = minX;
+          else if (minO === oRight) nextX = maxX;
+          else if (minO === oFront) nextZ = minZ;
+          else nextZ = maxZ;
+        }
+      }
+    }
+
+    p.x = nextX;
+    p.z = nextZ;
 
     // Depth in meters (forward is negative Z)
     this.depth = Math.max(this.depth, Math.floor(Math.abs(p.z)));
@@ -236,12 +300,12 @@ export class Venom3DEngine {
       this.generateNextChunk();
     }
 
-    // Cull chunks & entities behind the player
+    // Cull chunks & entities far behind the player (350m buffer - NEVER DISAPPEARS FROM VIEW!)
     this.cullOldChunks(p.z);
   }
 
   cullOldChunks(playerZ) {
-    const cullZ = playerZ + 45.0; // 45m behind player
+    const cullZ = playerZ + 350.0; // 350m behind player (well past camera far plane)
 
     // Remove old chunks
     this.facilityChunks = this.facilityChunks.filter(c => c.z < cullZ);
@@ -493,6 +557,23 @@ export class Venom3DEngine {
         continue;
       }
 
+      // Check hit zig-zag partition barriers (bullets blocked by walls)
+      let hitBarrier = false;
+      for (const chunk of this.facilityChunks) {
+        if (!chunk.barriers) continue;
+        for (const wall of chunk.barriers) {
+          if (Math.abs(bullet.x - wall.x) < wall.width / 2 + 0.3 && Math.abs(bullet.z - wall.z) < wall.depth / 2 + 0.3) {
+            hitBarrier = true;
+            break;
+          }
+        }
+        if (hitBarrier) break;
+      }
+      if (hitBarrier) {
+        this.bullets.splice(b, 1);
+        continue;
+      }
+
       if (bullet.life <= 0) {
         this.bullets.splice(b, 1);
       }
@@ -586,7 +667,57 @@ export class Venom3DEngine {
     const angleToPlayer = Math.atan2(dx, -dz);
     const diff = Math.abs(this.normalizeAngle(angleToPlayer - guard.angle));
 
-    return diff <= guard.fov / 2;
+    if (diff > guard.fov / 2) return false;
+
+    // Check if line of sight is obstructed by zig-zag walls (HIDING BEHIND WALLS!)
+    if (this.isLineOfSightBlocked(guard.x, guard.z, p.x, p.z)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  isLineOfSightBlocked(x1, z1, x2, z2) {
+    for (const chunk of this.facilityChunks) {
+      if (!chunk.barriers) continue;
+      for (const b of chunk.barriers) {
+        const minX = b.x - b.width / 2;
+        const maxX = b.x + b.width / 2;
+        const minZ = b.z - b.depth / 2;
+        const maxZ = b.z + b.depth / 2;
+
+        if (this.lineIntersectsBox(x1, z1, x2, z2, minX, minZ, maxX, maxZ)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  lineIntersectsBox(x1, z1, x2, z2, minX, minZ, maxX, maxZ) {
+    let tmin = 0, tmax = 1;
+    const dx = x2 - x1;
+    const dz = z2 - z1;
+
+    if (Math.abs(dx) > 1e-5) {
+      const tx1 = (minX - x1) / dx;
+      const tx2 = (maxX - x1) / dx;
+      tmin = Math.max(tmin, Math.min(tx1, tx2));
+      tmax = Math.min(tmax, Math.max(tx1, tx2));
+    } else if (x1 < minX || x1 > maxX) {
+      return false;
+    }
+
+    if (Math.abs(dz) > 1e-5) {
+      const tz1 = (minZ - z1) / dz;
+      const tz2 = (maxZ - z1) / dz;
+      tmin = Math.max(tmin, Math.min(tz1, tz2));
+      tmax = Math.min(tmax, Math.max(tz1, tz2));
+    } else if (z1 < minZ || z1 > maxZ) {
+      return false;
+    }
+
+    return tmax >= tmin && tmax >= 0 && tmin <= 1;
   }
 
   checkDisguiseBlown() {
