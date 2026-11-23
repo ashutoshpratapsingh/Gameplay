@@ -20,6 +20,18 @@ export const PROP_TYPES = {
 
 export class Venom3DEngine {
   constructor() {
+    // Persistent Callbacks across game restarts
+    this.onAK47Shot = null;
+    this.onSlimeMove = null;
+    this.onMorph = null;
+    this.onDevour = null;
+    this.onGuardSpotted = null;
+    this.onEvolution = null;
+    this.onGameOver = null;
+    this.onDash = null;
+    this.onDecoy = null;
+    this.onCamouflageDenied = null;
+
     this.reset();
   }
 
@@ -66,18 +78,6 @@ export class Venom3DEngine {
     this.decoyCooldownTimer = 0;
     this.comboCount = 0;
     this.comboTimer = 0;
-
-    // Callbacks
-    this.onAK47Shot = null;
-    this.onSlimeMove = null;
-    this.onMorph = null;
-    this.onDevour = null;
-    this.onGuardSpotted = null;
-    this.onEvolution = null;
-    this.onGameOver = null;
-    this.onDash = null;
-    this.onDecoy = null;
-    this.onCamouflageDenied = null;
 
     // Generate Initial 4 Chunks
     for (let i = 0; i < 4; i++) {

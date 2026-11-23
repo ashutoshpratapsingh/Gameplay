@@ -212,8 +212,12 @@ class Venom3DApp {
     });
 
     // Reset Level
-    this.btnReset.addEventListener("click", () => this.restartGame());
+    this.btnReset.addEventListener("click", () => {
+      venomAudio.ensureContext();
+      this.restartGame();
+    });
     this.btnRetry.addEventListener("click", () => {
+      venomAudio.ensureContext();
       this.gameOverModal.classList.remove("active");
       this.restartGame();
     });
@@ -405,7 +409,9 @@ class Venom3DApp {
   }
 
   restartGame() {
+    venomAudio.ensureContext();
     this.engine.reset();
+    this.bindEngineCallbacks();
     this.updateHUD();
   }
 
