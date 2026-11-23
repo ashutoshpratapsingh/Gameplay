@@ -11,7 +11,7 @@
  * - Mobile vertical portrait camera with smooth dampening follow.
  */
 
-import * as THREE from "../lib/three.module.js";
+import * as THREE from "three";
 
 export class Venom3DRenderer {
   constructor(container) {

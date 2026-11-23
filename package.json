@@ -1,10 +1,6 @@
 {
   "name": "venom-symbiote",
   "version": "1.0.0",
-  "description": "SYMBIOTE: Apex Predator - Novel Stealth Mimic Devour Game Mechanic",
-  "type": "module",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  }
+  "description": "SYMBIOTE 3D: Apex Predator - Novel Stealth Mimic Devour Game Mechanic",
+  "type": "module"
 }
